@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+    nginx:
+        build: nginx
+        ports:
+          - 8000:80
+        depends_on:
+          - api
+    api:
+        build: API
+#        environment:
+#          - PORT=8080
+#        ports:
+#          - 8080:8080
+    prometheus:
+        build: Prometheus
+        environment:
+          - PORT=8080
+        ports:
+          - 9090:9090
+        depends_on:
+          - api
+    grafana:
+        image: grafana/grafana
+        ports:
+          - 3000:3000
+        depends_on:
+          - prometheus
+
