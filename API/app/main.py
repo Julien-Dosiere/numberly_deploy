@@ -37,7 +37,7 @@ async def index():
 @app.get("/expensive")
 async def expensive_request():
     """
-    Slow request that can be tracked in Prometheus
+    Slow request simulating expensive computation
     """
     start_time = time()
     print("expensive calculation running....")
