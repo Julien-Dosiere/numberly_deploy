@@ -5,21 +5,30 @@ services:
         ports:
           - 8000:80
         depends_on:
-          - api
-    api:
+          - api1
+          - api2
+    api1:
         build: API
-#        environment:
-#          - PORT=8080
-#        ports:
-#          - 8080:8080
+    api2:
+        build: API
+    db:
+        build: db
+
+
+    prometheus-nginx-exporter:
+      image: nginx/nginx-prometheus-exporter
+      ports:
+        - 9113:9113
+      environment:
+        - SCRAPE_URI=http://nginx/metrics
+      depends_on:
+        - nginx
     prometheus:
         build: Prometheus
         environment:
           - PORT=8080
         ports:
           - 9090:9090
-        depends_on:
-          - api
     grafana:
         image: grafana/grafana
         ports:

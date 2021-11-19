@@ -1,10 +1,14 @@
 import asyncio
+import os
+
 from fastapi import FastAPI, Request
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import prometheus_client
 from time import time
 from starlette.responses import HTMLResponse
+
+import uvicorn
 from custom_exception import CustomException
 from prometheus_metrics import EXCEPTION_COUNT, REQUEST_COUNT, REQUEST_IN_PROGRESS, REQUEST_RESPOND_TIME
 
@@ -62,3 +66,8 @@ async def crash():
     Induces app crash for testing Sentry monitoring
     """
     return undefined_var
+
+
+if __name__ == "__main__":
+    port = os.getenv("PORT")
+    uvicorn.run(app, host="0.0.0.0", port=port or 8000)

@@ -1,6 +1,6 @@
 # Numberly Deploy
 
-Docker_compose deployment including a FastAPI app and its monitoring services.
+Docker-compose deployment including a FastAPI app and its monitoring services.
 
 ### Services:
 - localhost:8000 => FastAPI app access through Nginx

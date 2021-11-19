@@ -3,24 +3,12 @@ global:
   scrape_timeout: 1s
   evaluation_interval: 1s
 
-alerting:
-  alertmanagers:
-  - follow_redirects: true
-    scheme: http
-    timeout: 10s
-    api_version: v2
-    static_configs:
-    - targets:
-        - localhost:9093
-
 rule_files:
   - "rules.yml"
 
 scrape_configs:
 - job_name: prometheus
   honor_timestamps: true
-  scrape_interval: 1s
-  scrape_timeout: 1s
   metrics_path: /metrics
   scheme: http
   follow_redirects: true
@@ -33,8 +21,18 @@ scrape_configs:
     - targets:
         - grafana:3000
 
-- job_name: api
+- job_name: api1
   static_configs:
   - targets:
-    - api:9001
+    - api1:9001
 
+- job_name: api2
+  static_configs:
+  - targets:
+    - api2:9001
+
+- job_name: nginx-exporter
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+    - prometheus-nginx-exporter:9113
