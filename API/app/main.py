@@ -35,7 +35,7 @@ async def shutdown():
 
 
 @app.exception_handler(CustomException)
-async def custom_exception_handler(request: Request, exc: CustomException):
+async def custom_exception_handler(request: Request, exc: CustomException) -> HTMLResponse:
     """
     Custom handler allowing Prometheus metrics
     """
@@ -44,18 +44,18 @@ async def custom_exception_handler(request: Request, exc: CustomException):
 
 
 @app.get("/")
-async def index(request: Request):
+async def index(request: Request) -> dict:
     REQUEST_COUNT.labels('FastAPI', "root").inc()
     return {"message": "Hello World", "root_path": request.scope.get("root_path")}
 
 
 @app.get("/posts/")
-async def get_all_posts():
+async def get_all_posts() -> list[Post]:
     return await db_client.get_all_posts()
 
 
 @app.get("/posts/{post_id}")
-async def get_one_post(post_id: int):
+async def get_one_post(post_id: int) -> Post:
     return await db_client.get_one_post(post_id)
 
 
@@ -65,7 +65,7 @@ async def create_post(post: Post) -> Post:
 
 
 @app.delete("/posts/{post_id}")
-async def create_post(post_id: int):
+async def create_post(post_id: int) -> dict:
     is_deleted = await db_client.delete_post(post_id)
     message = f"Deletion successful" if is_deleted else "post not found"
     return {"message": message}
@@ -73,7 +73,7 @@ async def create_post(post_id: int):
 
 @REQUEST_IN_PROGRESS.track_inprogress()
 @app.get("/expensive")
-async def expensive_request():
+async def expensive_request() -> dict:
     """
     Slow request simulating expensive computation
     """

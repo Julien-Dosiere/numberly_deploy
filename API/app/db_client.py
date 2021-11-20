@@ -42,11 +42,12 @@ class DB_Client:
         return parse_obj_as(list[Post], data)
 
     async def get_one_post(self, post_id: int) -> Post:
-        query = self.posts.select().filter(self.posts.c.id == post_id)
+        query = self.posts.select().where(self.posts.c.id == post_id)
         data = await self.database.fetch_all(query=query)
-        return parse_obj_as(list[Post], data)
+        post = parse_obj_as(list[Post], data)[0]
+        return post
 
-    async def create_post(self, post: Post):
+    async def create_post(self, post: Post) -> Post:
         query = self.posts.insert(post.dict(exclude={'tags', 'id'})).returning(*self.posts.c)
         post.id = await self.database.execute(query)
         return post
