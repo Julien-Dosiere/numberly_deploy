@@ -5,4 +5,5 @@ COPY ./app/requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY ./app /code/app
 WORKDIR /code/app
+CMD ["sleep", "300"]
 CMD ["python", "main.py"]

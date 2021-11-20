@@ -35,4 +35,10 @@ scrape_configs:
   metrics_path: /metrics
   static_configs:
   - targets:
-    - prometheus-nginx-exporter:9113
+    - nginx-exporter:9113
+
+- job_name: psql-exporter
+  metrics_path: /metrics
+  static_configs:
+  - targets:
+    - psql-exporter:9187

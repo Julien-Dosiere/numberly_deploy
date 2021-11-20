@@ -1,17 +1,16 @@
 import asyncio
 import os
-
+from models import Post
+from db_client import DB_Client
 from fastapi import FastAPI, Request
 import sentry_sdk
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 import prometheus_client
 from time import time
 from starlette.responses import HTMLResponse
-
 import uvicorn
 from custom_exception import CustomException
 from prometheus_metrics import EXCEPTION_COUNT, REQUEST_COUNT, REQUEST_IN_PROGRESS, REQUEST_RESPOND_TIME
-
 
 sentry_sdk.init(dsn="https://04af687c23f14f05a43b45bfea40fa7e@o1067007.ingest.sentry.io/6060283")
 
@@ -20,6 +19,19 @@ app = FastAPI()
 asgi_app = SentryAsgiMiddleware(app)
 
 prometheus_client.start_http_server(9001)
+
+
+
+
+@app.on_event("startup")
+async def startup():
+    global db_client
+    db_client = await DB_Client.get_instance()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db_client.disconnect()
 
 
 @app.exception_handler(CustomException)
@@ -32,9 +44,31 @@ async def custom_exception_handler(request: Request, exc: CustomException):
 
 
 @app.get("/")
-async def index():
+async def index(request: Request):
     REQUEST_COUNT.labels('FastAPI', "root").inc()
-    return {"message": "Hello, Numberly!"}
+    return {"message": "Hello World", "root_path": request.scope.get("root_path")}
+
+
+@app.get("/posts/")
+async def get_all_posts():
+    return await db_client.get_all_posts()
+
+
+@app.get("/posts/{post_id}")
+async def get_one_post(post_id: int):
+    return await db_client.get_one_post(post_id)
+
+
+@app.post("/posts/")
+async def create_post(post: Post) -> Post:
+    return await db_client.create_post(post)
+
+
+@app.delete("/posts/{post_id}")
+async def create_post(post_id: int):
+    is_deleted = await db_client.delete_post(post_id)
+    message = f"Deletion successful" if is_deleted else "post not found"
+    return {"message": message}
 
 
 @REQUEST_IN_PROGRESS.track_inprogress()

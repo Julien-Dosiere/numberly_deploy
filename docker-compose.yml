@@ -1,5 +1,28 @@
 
 services:
+    psql:
+        build: psql
+        user: postgres
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+
+
+    api1:
+        build: API
+        depends_on:
+          psql:
+            condition: service_healthy
+
+
+    api2:
+        build: API
+        depends_on:
+          psql:
+            condition: service_healthy
+
     nginx:
         build: nginx
         ports:
@@ -7,15 +30,9 @@ services:
         depends_on:
           - api1
           - api2
-    api1:
-        build: API
-    api2:
-        build: API
-    db:
-        build: db
 
 
-    prometheus-nginx-exporter:
+    nginx-exporter:
       image: nginx/nginx-prometheus-exporter
       ports:
         - 9113:9113
@@ -23,6 +40,15 @@ services:
         - SCRAPE_URI=http://nginx/metrics
       depends_on:
         - nginx
+
+    psql-exporter:
+      image: wrouesnel/postgres_exporter
+      environment:
+        DATA_SOURCE_NAME: "postgresql://postgres:postgres@psql:5432/postgres?sslmode=disable"
+      ports:
+        - 9187:9187
+
+
     prometheus:
         build: Prometheus
         environment:
