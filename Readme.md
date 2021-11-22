@@ -1,8 +1,8 @@
 # Numberly Deploy
 
-Docker-compose deployment including a FastAPI app and its monitoring services.
+Docker-compose and Kubernetes deployment including a FastAPI app and its monitoring services.
 
-### Services:
+### Services(docker-compose):
 - localhost:8000 => Nginx server
 - localhost:9090 => Prometheus
 - localhost:3000 => Grafana

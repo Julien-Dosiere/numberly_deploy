@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import sqlalchemy
 from pydantic.tools import parse_obj_as
 import databases
@@ -10,15 +12,19 @@ from models import *
 
 class DB_Client:
     instance: Database = None
-    DATABASE_URL = "postgresql+psycopg2://postgres:postgres@psql:5432/postgres"
+    DATABASE_URL = f"postgresql+psycopg2://postgres:postgres@{os.getenv('PSQL_ADDRESS')}:5432/postgres"
     # DATABASE_URL = "postgresql+psycopg2://numberly:numberly@localhost:5732/numberly"
 
     @staticmethod
     async def get_instance() -> DB_Client:
         if DB_Client.instance is None:
-            database: Database = databases.Database(DB_Client.DATABASE_URL)
-            await database.connect()
-            DB_Client.instance = DB_Client(database)
+            try:
+                database: Database = databases.Database(DB_Client.DATABASE_URL)
+                await database.connect()
+                DB_Client.instance = DB_Client(database);
+            except Exception:
+                print("connection to db failed")
+
         return DB_Client.instance
 
     def __init__(self, database: Database):
