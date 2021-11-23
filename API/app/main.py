@@ -37,7 +37,7 @@ async def shutdown():
 @app.exception_handler(CustomException)
 async def custom_exception_handler(request: Request, exc: CustomException) -> HTMLResponse:
     """
-    Custom handler allowing Prometheus metrics
+    Custom handler allowing Prometheus metrics export
     """
     EXCEPTION_COUNT.labels(exc.app_name, exc.endpoint).inc()
     return HTMLResponse(content="Custom Exception")
@@ -49,23 +49,35 @@ async def index(request: Request) -> dict:
     return {"message": "Hello World", "root_path": request.scope.get("root_path")}
 
 
-@app.get("/posts/")
+@app.get("/posts")
 async def get_all_posts() -> list[Post]:
+    """
+    Returns all posts
+    """
     return await db_client.get_all_posts()
 
 
 @app.get("/posts/{post_id}")
 async def get_one_post(post_id: int) -> Post:
+    """
+    Returns specified Id post
+    """
     return await db_client.get_one_post(post_id)
 
 
-@app.post("/posts/")
+@app.post("/posts")
 async def create_post(post: Post) -> Post:
+    """
+    Creates new post sent in body and returned it with Id
+    """
     return await db_client.create_post(post)
 
 
 @app.delete("/posts/{post_id}")
 async def create_post(post_id: int) -> dict:
+    """
+    Deletes specified Id Post and returns message
+    """
     is_deleted = await db_client.delete_post(post_id)
     message = f"Deletion successful" if is_deleted else "post not found"
     return {"message": message}

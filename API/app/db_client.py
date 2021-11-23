@@ -21,7 +21,7 @@ class DB_Client:
             try:
                 database: Database = databases.Database(DB_Client.DATABASE_URL)
                 await database.connect()
-                DB_Client.instance = DB_Client(database);
+                DB_Client.instance = DB_Client(database)
             except Exception:
                 print("connection to db failed")
 
