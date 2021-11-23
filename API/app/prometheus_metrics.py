@@ -18,4 +18,6 @@ REQUEST_IN_PROGRESS = Gauge(
     'number of expensive requests in progress',
 )
 
-REQUEST_RESPOND_TIME = Summary('app_response_latency_seconds', 'Response latency in seconds')
+SLOW_REQUEST_RESPOND_TIME = Summary('slow_request_latency_seconds', 'Slow request latency in seconds')
+DB_READ_REQUEST_RESPOND_TIME = Summary('db_read_request_latency_seconds', 'db read request latency in seconds')
+DB_WRITE_REQUEST_RESPOND_TIME = Summary('db_write_request_latency_seconds', 'db write request latency in seconds')

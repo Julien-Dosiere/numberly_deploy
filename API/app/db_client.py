@@ -6,6 +6,8 @@ import sqlalchemy
 from pydantic.tools import parse_obj_as
 import databases
 from databases import Database
+
+from custom_exceptions import DBError
 from models import *
 
 
@@ -23,8 +25,8 @@ class DB_Client:
                 await database.connect()
                 DB_Client.instance = DB_Client(database)
             except Exception:
-                print("connection to db failed")
-
+                print('\033[93m'+"Warning: Connection to DB refused, DB queries would return errors")
+                DB_Client.instance = DB_Client(None)
         return DB_Client.instance
 
     def __init__(self, database: Database):
@@ -43,24 +45,37 @@ class DB_Client:
         await self.database.disconnect()
 
     async def get_all_posts(self) -> list[Post]:
-        query = self.posts.select()
-        data = await self.database.fetch_all(query=query)
-        return parse_obj_as(list[Post], data)
+        try:
+            query = self.posts.select()
+            data = await self.database.fetch_all(query=query)
+            return parse_obj_as(list[Post], data)
+        except Exception:
+            raise DBError("DB error")
 
     async def get_one_post(self, post_id: int) -> Post:
-        query = self.posts.select().where(self.posts.c.id == post_id)
-        data = await self.database.fetch_all(query=query)
-        post = parse_obj_as(list[Post], data)[0]
-        return post
+
+        try:
+            query = self.posts.select().where(self.posts.c.id == post_id)
+            data = await self.database.fetch_all(query=query)
+            post = parse_obj_as(list[Post], data)[0]
+            return post
+        except Exception:
+            raise DBError("DB error")
 
     async def create_post(self, post: Post) -> Post:
-        query = self.posts.insert(post.dict(exclude={'tags', 'id'})).returning(*self.posts.c)
-        post.id = await self.database.execute(query)
-        return post
+        try:
+            query = self.posts.insert(post.dict(exclude={'tags', 'id'})).returning(*self.posts.c)
+            post.id = await self.database.execute(query)
+            return post
+        except Exception:
+            raise DBError("DB error")
 
     async def delete_post(self, post_id: int) -> bool:
-        query = self.posts.delete().where(self.posts.c.id == post_id).returning(*self.posts.c)
-        return await self.database.execute(query) is not None
+        try:
+            query = self.posts.delete().where(self.posts.c.id == post_id).returning(*self.posts.c)
+            return await self.database.execute(query) is not None
+        except Exception:
+            raise DBError("DB error")
 
 
 

@@ -9,8 +9,8 @@ import prometheus_client
 from time import time
 from starlette.responses import HTMLResponse
 import uvicorn
-from custom_exception import CustomException
-from prometheus_metrics import EXCEPTION_COUNT, REQUEST_COUNT, REQUEST_IN_PROGRESS, REQUEST_RESPOND_TIME
+from custom_exceptions import RequestError, DBError
+from prometheus_metrics import *
 
 sentry_sdk.init(dsn="https://04af687c23f14f05a43b45bfea40fa7e@o1067007.ingest.sentry.io/6060283")
 
@@ -34,13 +34,24 @@ async def shutdown():
     await db_client.disconnect()
 
 
-@app.exception_handler(CustomException)
-async def custom_exception_handler(request: Request, exc: CustomException) -> HTMLResponse:
+@app.exception_handler(RequestError)
+async def custom_exception_handler(request: Request, exc: RequestError) -> HTMLResponse:
     """
     Custom handler allowing Prometheus metrics export
     """
     EXCEPTION_COUNT.labels(exc.app_name, exc.endpoint).inc()
-    return HTMLResponse(content="Custom Exception")
+    return HTMLResponse(content="This request returns only exceptions")
+
+
+
+@app.exception_handler(DBError)
+async def custom_exception_handler(request: Request, exc: DBError) -> HTMLResponse:
+    """
+    Custom handler dor DB connection errors
+    """
+
+    return HTMLResponse(content="Problems with database, check that DB is running and accessible")
+
 
 
 @app.get("/")
@@ -54,7 +65,12 @@ async def get_all_posts() -> list[Post]:
     """
     Returns all posts
     """
-    return await db_client.get_all_posts()
+    start_time = time()
+    data = await db_client.get_all_posts()
+    time_taken = time() - start_time
+    DB_WRITE_REQUEST_RESPOND_TIME.observe(time_taken)
+    return data
+
 
 
 @app.get("/posts/{post_id}")
@@ -70,7 +86,11 @@ async def create_post(post: Post) -> Post:
     """
     Creates new post sent in body and returned it with Id
     """
-    return await db_client.create_post(post)
+    start_time = time()
+    created_post = await db_client.create_post(post)
+    time_taken = time() - start_time
+    DB_WRITE_REQUEST_RESPOND_TIME.observe(time_taken)
+    return created_post
 
 
 @app.delete("/posts/{post_id}")
@@ -94,7 +114,7 @@ async def expensive_request() -> dict:
     await asyncio.sleep(6)
     print("expensive calculation finished")
     time_taken = time() - start_time
-    REQUEST_RESPOND_TIME.observe(time_taken)
+    SLOW_REQUEST_RESPOND_TIME.observe(time_taken)
     return {"message": "expensive calculation completed"}
 
 
@@ -103,7 +123,7 @@ async def raise_exception():
     """
     Raises exception for testing Prometheus monitoring
     """
-    raise CustomException(app_name="API", endpoint="exception endpoint")
+    raise RequestError(app_name="API", endpoint="exception endpoint")
 
 
 @app.get("/crash")
